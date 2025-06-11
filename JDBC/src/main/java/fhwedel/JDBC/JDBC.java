@@ -21,8 +21,16 @@ public class JDBC {
 
             // Ausgeben der Personen-Tabelle - Aufgabe 3
             showEmployees(con);
+
+            //Aktualisieren des Gehalts - Aufgabe 4
+            updateSalary(con, "it1", 0.1);  
+
+            //Löschen eines Mitarbeiters - Aufgabe 5
+            deleteEmployee(con, "Tietze", "Lutz");
+
+
         } catch (Exception e) {
-            System.out.println("BingBong");
+            System.out.println("Beim Öffnen der Datenbankverbindung oder einer SQL Operation ist eine Exception aufgetreten: " + "\n" + e);
         }
         
     }
@@ -107,7 +115,19 @@ public class JDBC {
             statement.setString(2, gehaltsStufe);
             statement.executeUpdate();
         } catch (SQLException e){
+            System.out.println("Beim Aktualisieren des Gehalts ist eine SQL Exception aufgetreten: " + "\n" + e);
+        }
+    }
 
+    private static void deleteEmployee(Connection con, String name, String vorname) {
+        try {
+            String sqlString = "delete from personal where name = ? and vorname = ?";
+            PreparedStatement statement = con.prepareStatement(sqlString);
+            statement.setString(1, name);
+            statement.setString(2, vorname);
+            statement.executeUpdate();
+        } catch (Exception e) {
+            System.out.println("Beim Löschen eines Mitarbeiters ist eine SQL Exception aufgetreten: " + "\n" + e);
         }
     }
 }
