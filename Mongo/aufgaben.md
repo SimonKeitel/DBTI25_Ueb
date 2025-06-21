@@ -38,7 +38,30 @@ Zurückgeben / Löschen aus Ausgeliehen-Dokument
 `db.borrowed.deleteOne({invnr: 1, lnr: 1})`
 
 ### f)
-db.reader.insertOne({lnr: 6, name: 'Heinz Müller', address: 'Klopstockweg 17, 38124 Braunschweig'})
-db.books.insertOne({invnr: 6, author: 'Horst Evers', title: 'Der König von Berlin', publisher: 'Rowohlt-Verlag'})
+`db.books.insertOne({invnr: 6, author: 'Horst Evers', title: 'Der König von Berlin', publisher: 'Rowohlt-Verlag'})`
 
-db.borrowed
+```
+db.reader.insertOne({
+                        lnr: 6, 
+                        name: 'Heinz Müller', 
+                        address: 'Klopstockweg 17, 38124 Braunschweig',
+                        borrowed: [
+                            {
+                                invnr: 6,
+                                duedate: new Date(2025, 8, 15)
+                            },
+                            {
+                                invnr: 1,
+                                duedate: new Date(2025, 8, 15)
+                            }
+                        ]
+                    })
+```
+
+Vorteile: \
+Nachteile: ausgeliehene Bücher nicht mehr Zentral an einem Ort gespeichert.\
+
+### g)
+Zurückgeben: db.reader.updateOne({lnr: 6}, {$pull: {borrowed: {invnr: 1}}})
+
+Ausleihen: db.reader.updateOne({lnr: 1}, {$push: {borrowed: {invnr: 1, duedate: new Date(2025, 8, 15)}}})
