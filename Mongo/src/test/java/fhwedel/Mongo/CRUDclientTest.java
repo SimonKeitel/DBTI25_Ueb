@@ -2,6 +2,8 @@ package fhwedel.Mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import static com.mongodb.client.model.Updates.*;
+import static com.mongodb.client.model.Filters.eq;
 
 import org.bson.Document;
 import org.junit.jupiter.api.*;
@@ -146,20 +148,50 @@ public class CRUDclientTest {
         books.insertOne(new Document("invnr", 1).append("author", "Marc-Uwe Kling").append("title", "Die Känguru-Chroniken: Ansichten eines vorlauten Beuteltiers").append("publisher", "Ullstein-Verlag"));
         books.insertOne(new Document("invnr", 7).append("author", "Horst Evers").append("title", "Der König von Berlin").append("publisher", "Rohwolt-Verlag"));
         
-        
+        Document borrowed1 = new Document("invnr", 1).append("duedate", LocalDate.of(2025, 8, 15));
+        Document borrowed2 = new Document("invnr", 7).append("duedate", LocalDate.of(2025, 8, 15));
 
+        List<Document> borrowedBooks = Arrays.asList(borrowed1, borrowed2);
 
-        Document newReader = new Document("lnr", 7).append("name", " Heinz Müller").append("address", "Klopstockweg 17, 38124 Braunschweig").append("borrowed", "TODO");
+        Document newReader = new Document("lnr", 7).append("name", " Heinz Müller").append("address", "Klopstockweg 17, 38124 Braunschweig").append("borrowed", borrowedBooks);
     
         reader.insertOne(newReader);
 
-      
+        assertEquals(1, reader.countDocuments());
 
+        Document readerDoc = reader.find(new Document("lnr", 7)).first();
+        assertNotNull(readerDoc, "Der Leser sollte nach dem heraussuchen aus der Datenbank nicht null sein");
+        List<Document> booksFromDb = (List<Document>) readerDoc.get("borrowed");
+        assertEquals(2, booksFromDb.size());
+        assertEquals(1, booksFromDb.get(0).getInteger("invnr"));
+        assertEquals(7, booksFromDb.get(1).getInteger("invnr"));
     }
 
     @Test
     void testAufgabeG() {
-        //TODO: wegen Array/Liostenbums aus der F nochmal schauen
+        MongoCollection<Document> books = db.getCollection("books");
+        MongoCollection<Document> reader = db.getCollection("reader");
+        
+        books.insertOne(new Document("invnr", 1).append("author", "Marc-Uwe Kling").append("title", "Die Känguru-Chroniken: Ansichten eines vorlauten Beuteltiers").append("publisher", "Ullstein-Verlag"));
+        books.insertOne(new Document("invnr", 7).append("author", "Horst Evers").append("title", "Der König von Berlin").append("publisher", "Rohwolt-Verlag"));
+        
+        List<Document> borrowedBooks = Arrays.asList();
+        reader.insertOne(new Document("lnr", 7).append("name", " Heinz Müller").append("address", "Klopstockweg 17, 38124 Braunschweig").append("borrowed", borrowedBooks));
+
+        
+        Document borrowed1 = new Document("invnr", 1).append("duedate", LocalDate.of(2025, 8, 15));
+        List<Document> updatedBorrowedBooks = (List<Document>) reader.find(new Document("lnr", 1)).first().get("borrowed");
+        updatedBorrowedBooks.add(borrowed1);
+        
+        //Ausleihen / zur Liste hinzufügen
+        reader.updateOne(new Document("lnr", 7), push("borrowed", updatedBorrowedBooks));
+        borrowedBooks = (List<Document>) reader.find(new Document("lnr", 7)).first().get("borrowed");
+        assertEquals(1, borrowedBooks.size());
+
+        //Zurückgeben / aus der Liste entfernen
+        reader.updateOne(eq("lnr", 7), pull("borrowed", eq("invnr", 1)));
+        borrowedBooks = (List<Document>) reader.find(new Document("lnr", 7)).first().get("borrowed");
+        assertEquals(0, borrowedBooks.size());
     }
 
 
